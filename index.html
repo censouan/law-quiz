@@ -303,7 +303,7 @@ async function showRank(){
         .select("name,score,created_at")
         .order("score",{ascending:false})
         .order("created_at",{ascending:true})
-        .limit(50);
+        .limit(50));
       if(!error&&Array.isArray(data)){rows=data;fromCloud=true;}
     }catch(e){console.warn("云端排行榜读取失败",e);}
   }
