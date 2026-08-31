@@ -167,7 +167,7 @@ function show(id){["home","quiz","result","rank"].forEach(x=>document.getElement
 function startQuiz(){
   const name=document.getElementById("playerName").value.trim();
   player=name||"匿名员工";
-  questions=shuffle([...BANK]).slice(0,TOTAL);
+  questions=shuffle(BANK.map((b,i)=>({q:b.q,opts:b.opts,a:b.a,an:b.an,idx:i}))).slice(0,TOTAL);
   cur=0; answers=[];
   show("quiz"); renderQ();
 }
@@ -223,7 +223,9 @@ async function finish(){
   });
   document.getElementById("reviewList").innerHTML=html;
   show("result");               // 先显示成绩页（不等云端，保证永不卡住）
-  saveScore(player,score);      // 后台静默保存，云端失败自动降级本地
+  // 每题明细（BANK 原始索引 + 对错），供后台统计正确率
+  const details=questions.map((q,i)=>({q:q.idx,ok:answers[i]===q.a}));
+  saveScore(player,score,details);  // 后台静默保存，云端失败自动降级本地
 }
 
 /* ---- 云端共用排行榜（腾讯云开发 CloudBase · PostgreSQL + RLS）----
@@ -282,10 +284,13 @@ function saveLocal(name,score){
   localStorage.setItem("lawQuizRank",JSON.stringify(arr.slice(0,50)));
 }
 
-async function saveScore(name,score){
+async function saveScore(name,score,details){
   if(await initCloud().catch(()=>false)){
     try{
-      const {error}=await cloudTimeout(cloudDb.from("quiz_scores").insert({name:name,score:score}));
+      const {error}=await cloudTimeout(cloudDb.from("quiz_scores").insert({
+        name:name,score:score,
+        details:details?JSON.stringify(details):null  // 答题明细，统计正确率用
+      }));
       if(!error)return;
     }catch(e){console.warn("云端成绩写入失败",e);}
   }
