@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>普法知识答题 · 数据安全与合规专题</title>
-<script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
 <style>
   :root{
     --navy:#0d2b5c; --navy-deep:#081d40; --navy-light:#16407f;
@@ -235,10 +234,23 @@ const CLOUD_REGION="ap-shanghai";
 const CLOUD_PUBLISHABLE_KEY="eyJhbGciOiJSUzI1NiIsImtpZCI6IjliNzhmYTNlLTYxMGMtNDhmNy1hYzk1LWUzMGZmYmM4ODIxYSJ9.eyJpc3MiOiJodHRwczovL2xhdy1xdWl6LWQ2ZzdldjJrZjQ4MTBhNmI1LmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJsYXctcXVpei1kNmc3ZXYya2Y0ODEwYTZiNSIsImV4cCI6NDA5MTgzNzA5OSwiaWF0IjoxNzg4MTUzODk5LCJub25jZSI6Ikp1NUtVWmFlVDRtbms4ZE5ZcVFMbVEiLCJhdF9oYXNoIjoiSnU1S1VaYWVUNG1uazhkTllxUUxtUSIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJsYXctcXVpei1kNmc3ZXYya2Y0ODEwYTZiNSIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJyb2xlIjoiYW5vbiIsImlzX2Fub255bW91cyI6dHJ1ZSwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiYW5vbnltb3VzIiwicHJvdmlkZXJzIjpbImFub255bW91cyJdfSwidXNlcl9tZXRhZGF0YSI6eyJuYW1lIjoiQW5vbnltb3VzIn0sInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.lButBj158VoAvJ9DwxqoHKhkJd3s_Y-30QHg0GyZK8WTQvLGdwOAw2huzPBiy7ZztSQKUucUiYeBZskoRxRiJuxGfZuP3O2xhTqf19L5nwFrZVvPVM0gOwD07fhruopqtD6MHhh99KoHSKbUzDrdaJGgWNcshXgbOlPQ7u3-FAHEHTkG2b7cKVdpifAW_vB3L5RZ1YgSzfvMqScqZlybAgiG8i7OR4EKNAILGiO050nuxou2-L-0pJwgmkg_h0AxbP-EGyDhQLj6jRDnkolt9smOduojPRjOI7nu4sIzF5HCXDYxOF5wlXhCD3Kcz0XherbarspALBC6tdHtOd3T0Q";
 let cloudDb=null,cloudReady=null;
 
+function loadCloudSDK(ms=8000){
+  return new Promise(res=>{
+    if(window.cloudbase) return res(true);
+    const s=document.createElement("script");
+    s.src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js";
+    s.onload=()=>res(!!window.cloudbase);
+    s.onerror=()=>res(false);
+    setTimeout(()=>res(!!window.cloudbase),ms);
+    document.head.appendChild(s);
+  });
+}
+
 function initCloud(){
   if(!cloudReady){
     cloudReady=(async()=>{
       try{
+        if(!(await loadCloudSDK())) return false;
         const app=cloudbase.init({env:CLOUD_ENV,region:CLOUD_REGION,accessKey:CLOUD_PUBLISHABLE_KEY});
         const r=await app.auth.signInAnonymously();
         if(r&&r.error)throw r.error;
