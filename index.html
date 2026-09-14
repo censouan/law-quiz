@@ -189,11 +189,9 @@ const BANK=[
 ];
 
 const TOTAL=5, PER=20, LIMIT=60;
-/* 排行榜计分起点：2026-09-14 修复「判断题答案键反转」后重新计分。
-   此前 8/31–9/14 提交的成绩仍完整保留在云端（可导出/核对），只是不参与榜单排名，
-   避免修复前后成绩混榜（修复前如实作答者封顶 60 分）。 */
-const BOARD_SINCE="2026-09-14T01:50:00Z";
-const BOARD_SINCE_TS=Date.parse(BOARD_SINCE);
+/* 历史数据说明：2026-09-14 09:58 前提交的成绩，其判断题 ok 因答案键反转而是反的
+   （30 道单选不受影响）。库中记录一律不改不删，全员留在排行榜上；
+   受影响的早期成绩在活动结束导出统计时按题号≥30 取反还原，见《统计导出SQL_活动结束后执行.md》。 */
 let questions=[], cur=0, answers=[], sel=-1, timerId=null, left=LIMIT, player="";
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -345,7 +343,6 @@ async function showRank(){
     try{
       const {data,error}=await cloudTimeout(cloudDb.from("quiz_scores")
         .select("name,score,created_at")
-        .gte("created_at",BOARD_SINCE)   // 只取修复后重新计分的成绩
         .order("score",{ascending:false})
         .order("created_at",{ascending:true})
         .limit(50));
@@ -353,9 +350,9 @@ async function showRank(){
     }catch(e){console.warn("云端排行榜读取失败",e);}
   }
   if(!rows){
-    try{rows=JSON.parse(localStorage.getItem("lawQuizRank")||"[]").filter(r=>r.time>=BOARD_SINCE_TS);}catch(e){rows=[];}
+    try{rows=JSON.parse(localStorage.getItem("lawQuizRank")||"[]");}catch(e){rows=[];}
   }
-  if(!rows.length){body.innerHTML='<div class="empty">排行榜自 2026-09-14 起重新计分<br>暂无新成绩，快来第一个答题吧！</div>';}
+  if(!rows.length){body.innerHTML='<div class="empty">暂无成绩记录，快来第一个答题吧！</div>';}
   else{
     let html="<table><tr><th>名次</th><th>姓名</th><th>得分</th><th>日期</th></tr>";
     rows.slice(0,10).forEach((r,i)=>{
